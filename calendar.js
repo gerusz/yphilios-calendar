@@ -164,7 +164,7 @@ class XDaysAfterEvent extends CalendarEvent {
 }
 
 export const campaignDates = {
-	"White Death": new MarkedEvent("White Death", new YphiliosDate(1622, 10, 13), ["campaign", "white_death"]),
+	"White Death": new MarkedEvent("White Death", new YphiliosDate(1622, 10, 15), ["campaign", "white_death"]),
 	"The Necklace of Major-Baroness Stronich": new MarkedEvent("The Necklace of Major-Baroness Stronich", new YphiliosDate(1622, 9, 3), ["campaign", "stronich_necklace"]),
 	"Airship Trip": new MarkedEvent("Airship Trip", new YphiliosDate(1622, 7, 10), ["campaign", "airship_trip"]),
 	"The Wizard of Crow County": new MarkedEvent("The Wizard of Crow County", new YphiliosDate(1622, 4, 11), ["campaign", "crow_county"])
@@ -250,6 +250,65 @@ function generateMarkedDates(year=null) {
 	for(let details of eventsToAdd) {
 		let dayIndex = details.date.dayIndex;
 		markedDates[dayIndex] = (markedDates[dayIndex] ?? []).concat([details]);
+	}
+}
+
+const legendRows = [];
+
+function generateLegend() {
+	if(legendRows.length > 0) {
+		return;
+	}
+
+	legendRows.push({"classes": ["observation", "legend-cell-dotted"], "description": "Observation"});
+	legendRows.push({"classes": ["holiday", "legend-cell-dotted"], "description": "Holiday"});
+	legendRows.push({"classes": ["weekday5"], "description": "Rautayrgoia (first day of the weekend)"});
+	legendRows.push({"classes": ["weekday6"], "description": "Ur-Khaia (second day of the weekend)"});
+
+	for(let [campaignName, campaignDetails] of Object.entries(campaignDates)) {
+		legendRows.push({
+			"classes": campaignDetails.cellClasses,
+			"description": "Most recent day of " + campaignName
+		});
+	}
+
+	for(let [campaignName, campaignDetails] of Object.entries(previousCampaigns)) {
+		legendRows.push({
+			"classes": campaignDetails.cellClasses,
+			"description": "Days of " + campaignName
+		})
+	}
+}
+
+export function renderLegend() {
+	generateLegend();
+
+	let legendContainer = document.getElementById("legend-container");
+	
+	let legendHeader = document.createElement("h1");
+	legendHeader.className = "text-center";
+	legendHeader.innerHTML = "Legend";
+	legendContainer.appendChild(legendHeader);
+
+	let legendTable = document.createElement("table");
+	legendTable.classList.add("table", "table-dark", "w-100");
+	legendContainer.appendChild(legendTable);
+
+	let legendTableBody = document.createElement("tbody");
+	legendTable.appendChild(legendTableBody);
+	
+	for(let legendRowContent of legendRows) {
+		let legendRow = document.createElement("tr");
+		legendTableBody.appendChild(legendRow);
+
+		let legendHeadCell = document.createElement("th");
+		legendRow.appendChild(legendHeadCell);
+		legendHeadCell.innerHTML = "Cell";
+		legendHeadCell.classList.add(...legendRowContent["classes"]);
+
+		let legendDescriptionCell = document.createElement("td");
+		legendRow.appendChild(legendDescriptionCell);
+		legendDescriptionCell.innerHTML = legendRowContent["description"];
 	}
 }
 
@@ -508,6 +567,7 @@ function simpleDayCell(date, cellClassList=[], includeYear = false, includeMonth
 	cell.innerHTML = cellContent;
 	cell.classList.add(...fullClassList);
 	cell.id = `day${date.dayIndex}`
+	cell.addEventListener("click", () => zoomWeek(date.year, date.weekIndex));
 	return cell;
 }
 

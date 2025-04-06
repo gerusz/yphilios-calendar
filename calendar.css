@@ -50,15 +50,39 @@ body {
     color: orange !important;
 }
 
-.month-table {
-    min-width: 250px;
+@media screen and (max-width: 600px) {
+    .month-table {
+        width: 100%;
+    }
+    .month-card {
+        width: 100%;
+    }
+}
+
+@media screen and (min-width: 601px) and (max-width: 1000px) {
+    .month-table {
+        min-width: 300px;
+    }
+    .month-card {
+        min-width: 50%;
+        max-width: 100%;
+    }
+}
+
+@media screen and (min-width: 1001px) {
+    .month-table {
+        min-width: 250px;
+    }
+
+    .month-card {
+        min-width: 15%;
+    }
 }
 
 .month-card {
     border-color: white;
     margin-top: 5px;
     margin-bottom: 5px;
-    min-width: 15%;
 }
 
 .day-card {
@@ -120,4 +144,8 @@ body {
 .campaign.crow_county {
     background-color: darkolivegreen !important;
     color: white !important;
+}
+
+.legend-cell-dotted {
+    text-decoration: dotted underline;
 }
