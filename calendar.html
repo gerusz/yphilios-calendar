@@ -13,12 +13,8 @@
         <script type="module">
             import * as renderer from "./calendar.js";
             import {YphiliosDate, dateRelativeTo} from "./calendar_data.js";
-            // Test
-            let eoy = new YphiliosDate(1622, 12, 32);
-            let eoy2 = dateRelativeTo(new YphiliosDate(1622, 12, 31), 1);
-            renderer.renderYear(new YphiliosDate(1622, 1, 1), document.getElementById("calendar-container"));
             renderer.renderLegend();
-            console.log("Month rendered");
+            renderer.renderDefaultView();
         </script>
         <div id="calendar-container" class="container-fluid">
         </div>

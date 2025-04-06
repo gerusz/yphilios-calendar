@@ -96,9 +96,6 @@ export function getMoonPhaseSymbol(moonPhase, moonPeriod) {
 	// If the moon period is even, full and new moons will last 2 days.
 	// If the moon period is odd, they will last one day, with the new moon
 	// being the day before the actual midpoint
-	if(moonPhase == 6 && moonPeriod == 14) {
-		console.log("Problematic moon phase");
-	}
 	let twoDayPhases = (moonPeriod % 2 == 0);
 
 	let wanGib = Math.round(moonPeriod/8);
@@ -172,20 +169,6 @@ export class YphiliosDate {
 		// Week index
 		let yearStartDay = getYearStartDay(year);
 		this.weekIndex = Math.ceil((this.dayOfYearIndex + yearStartDay)/7);
-		// Which is incorrect for weeks beyond the first unless the year starts on the first day
-		/*
-		let firstWeekIsFractional = (yearStartDay != 0);
-		if(firstWeekIsFractional) {
-			if(month > 1) {
-				this.weekIndex++;
-			} else {
-				let dayOfFirstFullWeekStart = (7-yearStartDay)+1;
-				if(day >= dayOfFirstFullWeekStart) {
-					this.weekIndex++;
-				}
-			}
-		}*/
-
 	}
 	
 	get shortDateString() {

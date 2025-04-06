@@ -2,13 +2,14 @@ import { YphiliosDate, dateRelativeTo, dayNames, getWeekPivotDays, getMonthLengt
 
 class CalendarEvent {
 
-	constructor(name, cellClasses) {
+	constructor(name, cellClasses, icon) {
 		this.name = name;
 		if (typeof cellClasses === "string") {
 			this.cellClasses = [cellClasses];
 		} else {
 			this.cellClasses = cellClasses;
 		}
+		this.icon = icon ?? "";
 	}
 
 	get title() {
@@ -16,7 +17,7 @@ class CalendarEvent {
 	}
 
 	get eventDetails() {
-		return this.name;
+		return this.icon + this.name;
 	}
  
 	eventInYear(year) {
@@ -25,8 +26,8 @@ class CalendarEvent {
 }
 
 class MarkedEvent extends CalendarEvent {
-	constructor(name, date, cellClasses) {
-		super(name, cellClasses);
+	constructor(name, date, cellClasses, icon) {
+		super(name, cellClasses, icon);
 		this.date = date;
 	}
 
@@ -37,15 +38,15 @@ class MarkedEvent extends CalendarEvent {
 
 class AnonymousEvent extends MarkedEvent {
 	// This event is just marking a date without a name or class. Useful for multi-day events, etc...
-	constructor(year, month, day) {
-		super("", new YphiliosDate(year, month, day), []);
+	constructor(year, month, day, icon) {
+		super("", new YphiliosDate(year, month, day), [], icon);
 	}
 }
 
 class CalendarNote extends AnonymousEvent {
 	// This represents an anonymous note in the calendar without a name or classes.
-	constructor(year, month, day, note) {
-		super(year, month, day);
+	constructor(year, month, day, note, icon) {
+		super(year, month, day, icon);
 		this.note = note;
 	}
 
@@ -54,13 +55,13 @@ class CalendarNote extends AnonymousEvent {
 	}
 
 	get eventDetails() {
-		return this.note;
+		return this.icon + this.note;
 	}
 }
 
 class YearlyEvent extends CalendarEvent {
-	constructor(name, month, days, cellClasses) {
-		super(name, cellClasses);
+	constructor(name, month, days, cellClasses, icon) {
+		super(name, cellClasses, icon);
 		this.month = month;
 		this.days = days;
 	}
@@ -78,14 +79,14 @@ class YearlyEvent extends CalendarEvent {
 		if(eventDay < 0) {
 			eventDay = getMonthLength(this.month, year) + eventDay + 1;
 		}
-		return [new MarkedEvent(this.name, new YphiliosDate(year, this.month, eventDay), this.cellClasses)];
+		return [new MarkedEvent(this.name, new YphiliosDate(year, this.month, eventDay), this.cellClasses, this.icon)];
 	}
 }
 
 class NthXdayEvent extends CalendarEvent {
 	// Class for "nth Monday of X month" type of events like Mother's Day
-	constructor(name, month, weekDayIndex, n, needsFullWeek, cellClasses) {
-		super(name, cellClasses);
+	constructor(name, month, weekDayIndex, n, needsFullWeek, cellClasses, icon) {
+		super(name, cellClasses, icon);
 		this.month = month;
 		this.weekDayIndex = weekDayIndex;
 		this.n = n;
@@ -103,14 +104,14 @@ class NthXdayEvent extends CalendarEvent {
 		for(let idx=1; idx < this.n; idx++) {
 			firstXdayOfMonthDate = dateRelativeTo(firstXdayOfMonthDate, 7);
 		}
-		return [new MarkedEvent(this.name, firstXdayOfMonthDate, this.cellClasses)];
+		return [new MarkedEvent(this.name, firstXdayOfMonthDate, this.cellClasses, this.icon)];
 	}
 }
 
 class MultidayEvent extends CalendarEvent {
 	// Class for events covering a time span
-	constructor(name, firstDay, lastDay, cellClasses) {
-		super(name, cellClasses);
+	constructor(name, firstDay, lastDay, cellClasses, icon) {
+		super(name, cellClasses, icon);
 		// First and last days should be CalendarEvent objects and should not be
 		// multiday events themselves
 		this.firstDay = firstDay;
@@ -126,7 +127,7 @@ class MultidayEvent extends CalendarEvent {
 			let offset = i - firstDayInYear.date.dayIndex;
 			let eventDayDate = dateRelativeTo(firstDayInYear.date, offset);
 			let eventDayName = `${this.name} day ${offset+1}`;
-			output.push(new MarkedEvent(eventDayName, eventDayDate, this.cellClasses));
+			output.push(new MarkedEvent(eventDayName, eventDayDate, this.cellClasses, this.icon));
 		}
 		return output;
 	}
@@ -134,8 +135,8 @@ class MultidayEvent extends CalendarEvent {
 
 class ResolvedEvent extends CalendarEvent {
 	// Event that lazily resolves to another event
-	constructor(name, eventKey, cellClasses) {
-		super(name, cellClasses);
+	constructor(name, eventKey, cellClasses, icon) {
+		super(name, cellClasses, icon);
 		this.eventKey = eventKey;
 		this.referencedEvent = null;
 	}
@@ -150,8 +151,8 @@ class ResolvedEvent extends CalendarEvent {
 
 class XDaysAfterEvent extends CalendarEvent {
 	// Event that always occurs a fixed number of days after (or before, if it's negative) another one
-	constructor(name, otherEvent, days, cellClasses) {
-		super(name, cellClasses);
+	constructor(name, otherEvent, days, cellClasses, icon) {
+		super(name, cellClasses, icon);
 		this.otherEvent = otherEvent;
 		this.days = days;
 	}
@@ -159,7 +160,7 @@ class XDaysAfterEvent extends CalendarEvent {
 	eventInYear(year) {
 		let otherEventInYear = this.otherEvent.eventInYear(year);
 		let otherEventEndDate = otherEventInYear[otherEventInYear.length-1].date;
-		return [new MarkedEvent(this.name, dateRelativeTo(otherEventEndDate, this.days), this.cellClasses)];
+		return [new MarkedEvent(this.name, dateRelativeTo(otherEventEndDate, this.days), this.cellClasses, this.icon)];
 	}
 }
 
@@ -167,23 +168,44 @@ export const campaignDates = {
 	"White Death": new MarkedEvent("White Death", new YphiliosDate(1622, 10, 15), ["campaign", "white_death"]),
 	"The Necklace of Major-Baroness Stronich": new MarkedEvent("The Necklace of Major-Baroness Stronich", new YphiliosDate(1622, 9, 3), ["campaign", "stronich_necklace"]),
 	"Airship Trip": new MarkedEvent("Airship Trip", new YphiliosDate(1622, 7, 10), ["campaign", "airship_trip"]),
-	"The Wizard of Crow County": new MarkedEvent("The Wizard of Crow County", new YphiliosDate(1622, 4, 11), ["campaign", "crow_county"])
+	"The Wizard of Crow County": new MarkedEvent("The Wizard of Crow County", new YphiliosDate(1622, 4, 11), ["campaign", "crow_county"]),
+	"Hell is Green": new MarkedEvent("Hell is Green", new YphiliosDate(1623, 3, 28), ["campaign", "hell-is-green"])
+}
+
+export const currentCampaign = "White Death";
+
+export function renderDefaultView() {
+	let focusDate = campaignDates[currentCampaign].date;
+	renderYear(focusDate, document.getElementById("calendar-container"));
 }
 
 export const events = {
-	"New Year": new YearlyEvent("New Year / Winter Solstice (S) / Summer Solstice (N)", 1, 1, "holiday"),
-	"Spring Equinox": new YearlyEvent("Spring Equinox (S) / Autumn Equinox (N)", 4, 1, "observation"),
-	"Summer Solstice": new YearlyEvent("Summer Solstice (S) / Winter Solstice (N)", 7, 1, "observation"),
-	"Autumn Equinox": new YearlyEvent("Autumn Equinox (S) / Spring Equinox (N)", 10, 1, "observation"),
-	"Arykamlesi Midspring Festival": new YearlyEvent("Arykamlesi Midspring Festival", 11, 15, "holiday"),
-	"NYE": new YearlyEvent("New Year's Eve", 12, -1, "holiday"),
-	"Mothers' Day": new NthXdayEvent("Mothers' Day", 5, 6, 1, true, "observation"),
-	"Cruinneach Summer Festival": new NthXdayEvent("Cruinneach Summer Festival", 2, 5, 2, false, "holiday"),
-	"Auberins Day of Freedom": new YearlyEvent("Auberins Day of Freedom", 3, 23, "holiday"),
-	"Caemlun's Day of Unity": new NthXdayEvent("Caemlun's Day of Unity", 6, 5, 2, false, "holiday"),
-	"Tälvi's Rest": new MultidayEvent("Tälvi's Rest", new YearlyEvent("", 1, 2, ""), new YearlyEvent("", 1, 6, ""), "observation"),
-	"Sarkon's Reign": new MultidayEvent("Sarkon's Reign", new NthXdayEvent("", 8, 0, 2, true, ""), new NthXdayEvent("", 8, 6, 2, true, ""), "observation"),
-	"The Thunder Games": new NthXdayEvent("The Thunder Games", 7, 1, 2, false, "holiday")
+	"New Year": new YearlyEvent("New Year / Winter Solstice (S) / Summer Solstice (N)", 1, 1, "holiday", "&#x1F389;"),
+	"Spring Equinox": new YearlyEvent("Spring Equinox (S) / Autumn Equinox (N)", 4, 1, "observation", "&#x1F441;&#xFE0F;"),
+	"Summer Solstice": new YearlyEvent("Summer Solstice (S) / Winter Solstice (N)", 7, 1, "observation", "&#x1F441;&#xFE0F;"),
+	"Autumn Equinox": new YearlyEvent("Autumn Equinox (S) / Spring Equinox (N)", 10, 1, "observation", "&#x1F441;&#xFE0F;"),
+	"Arykamlesi Midspring Festival": new YearlyEvent("Arykamlesi Midspring Festival", 11, 15, "holiday", "&#x1F389;"),
+	"NYE": new YearlyEvent("New Year's Eve", 12, -1, "holiday", "&#x1F389;"),
+	"Mothers' Day": new NthXdayEvent("Mothers' Day", 5, 6, 1, true, "observation", "&#x1F441;&#xFE0F;"),
+	"Cruinneach Summer Festival": new NthXdayEvent("Cruinneach Summer Festival", 2, 5, 2, false, "holiday", "&#x1F389;"),
+	"Auberins Day of Freedom": new YearlyEvent("Auberins Day of Freedom", 3, 23, "holiday", "&#x1F389;"),
+	"Caemlun's Day of Unity": new NthXdayEvent("Caemlun's Day of Unity", 6, 5, 2, false, "holiday", "&#x1F389;"),
+	"Tälvi's Rest": new MultidayEvent("Tälvi's Rest", new YearlyEvent("", 1, 2, ""), new YearlyEvent("", 1, 6, ""), "observation", "&#x1F441;&#xFE0F;"),
+	"Sarkon's Reign": new MultidayEvent("Sarkon's Reign", new NthXdayEvent("", 8, 0, 2, true, ""), new NthXdayEvent("", 8, 6, 2, true, ""), "observation", "&#x1F441;&#xFE0F;"),
+	"The Thunder Games": new NthXdayEvent("The Thunder Games", 7, 1, 2, false, "holiday", "&#x1F389;"),
+	// Zodical changes
+	"Bear": new YearlyEvent("Sun enters the Bear constellation", 1, 17, "zodiac"),
+	"Elk": new YearlyEvent("Sun enters the Elk constellation", 2, 17, "zodiac"),
+	"Eagle": new YearlyEvent("Sun enters the Eagle constellation", 3, 17, "zodiac"),
+	"Wolf": new YearlyEvent("Sun enters the Wolf constellation", 4, 17, "zodiac"),
+	"Tiger": new YearlyEvent("Sun enters the Tiger constellation", 5, 17, "zodiac"),
+	"Bee": new YearlyEvent("Sun enters the Bee constellation", 6, 17, "zodiac"),
+	"Spider": new YearlyEvent("Sun enters the Spider constellation", 7, 17, "zodiac"),
+	"Shark": new YearlyEvent("Sun enters the Shark constellation", 8, 17, "zodiac"),
+	"Mammoth": new YearlyEvent("Sun enters the Mammoth constellation", 9, 17, "zodiac"),
+	"Badger": new YearlyEvent("Sun enters the Badger constellation", 10, 17, "zodiac"),
+	"Dragon": new YearlyEvent("Sun enters the Dragon constellation", 11, 17, "zodiac"),
+	"Bat": new YearlyEvent("Sun enters the Bat constellation", 12, 17, "zodiac")
 };
 
 export const previousCampaigns = {
@@ -196,18 +218,20 @@ export const previousCampaigns = {
 }
 
 export const calendarNotes = [
-	new CalendarNote(1622, 6, 11, "The party arrives in Cruinneach"),
-	new CalendarNote(1622, 6, 11, "The party tracks down Zara"),
-	new CalendarNote(1622, 6, 12, "The party eliminates the cultist cell"),
-	new CalendarNote(1622, 6, 13, "The party returns the map and is hired to infiltrate an auction"),
-	new CalendarNote(1622, 6, 14, "The party finds the invite and the ship's figurehead"),
-	new CalendarNote(1622, 6, 15, "The party's first encounter with Clarice Emerton / \"Cheeky\" Gina Greasebones, the green hag"),
-	new CalendarNote(1622, 6, 16, "The party flies to the auction"),
-	new CalendarNote(1622, 6, 17, "The first day of auction, mix & mingle, etc..."),
-	new CalendarNote(1622, 6, 18, "The second day of auction, *insert \"It's Always Sunny in Philadelphia\" music* <span class=\"handwriting\">The party decides to blow up a pirate airship.</span>"),
-	new CalendarNote(1622, 6, 19, "The party departs the auction after being held for questioning."),
-	new CalendarNote(1622, 6, 19, "Ashdagh is captured by cultists. Fight with some cultists in Jaghthonagh's home dimension."),
-	new CalendarNote(1622, 6, 20, "The party returns to Cruinneach and discovers a traitor.")
+	new CalendarNote(1622, 6, 11, "The party arrives in Cruinneach", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 11, "The party tracks down Zara", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 12, "The party eliminates the cultist cell", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 13, "The party returns the map and is hired to infiltrate an auction", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 14, "The party finds the invite and the ship's figurehead", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 15, "The party's first encounter with Clarice Emerton / \"Cheeky\" Gina Greasebones, the green hag", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 16, "The party flies to the auction", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 17, "The first day of auction, mix & mingle, etc...", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 18, "The second day of auction", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 18, "Party: \"Sure, we will be subtle, we won't cause any ruckus\"", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 18, "&#x1F3B6;\"It's Always Sunny in Philadelphia\" theme&#x1F3B6; <span class=\"handwriting\">The party blows up an airship.</span>", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 19, "The party departs the auction after being held for questioning.", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 19, "Ashdagh is captured by cultists. Fight with some cultists in Jaghthonagh's home dimension.", "&#x1F4DD;"),
+	new CalendarNote(1622, 6, 20, "The party returns to Cruinneach and discovers a traitor.", "&#x1F4DD;")
 ]
 
 const markedDates = {};
@@ -262,6 +286,7 @@ function generateLegend() {
 
 	legendRows.push({"classes": ["observation", "legend-cell-dotted"], "description": "Observation"});
 	legendRows.push({"classes": ["holiday", "legend-cell-dotted"], "description": "Holiday"});
+	legendRows.push({"classes": ["zodiac", "legend-cell-dotted"], "description": "Zodical change (the Sun enters a new sign)"});
 	legendRows.push({"classes": ["weekday5"], "description": "Rautayrgoia (first day of the weekend)"});
 	legendRows.push({"classes": ["weekday6"], "description": "Ur-Khaia (second day of the weekend)"});
 

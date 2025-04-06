@@ -50,6 +50,10 @@ body {
     color: orange !important;
 }
 
+.zodiac {
+    color: plum !important;
+}
+
 @media screen and (max-width: 600px) {
     .month-table {
         width: 100%;
@@ -110,6 +114,15 @@ body {
 
 .previous-campaign.white_death {
     text-shadow:  #a0e0ff 0 0 5px;
+}
+
+.campaign.hell-is-green {
+    background-color: greenyellow !important;
+    color: black !important;
+}
+
+.previous-campaign.hell-is-green {
+    text-shadow: greenyellow 0 0 5px;
 }
 
 .previous-campaign.long-shadow {
